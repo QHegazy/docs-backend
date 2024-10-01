@@ -11,6 +11,7 @@ This project is a real-time collaborative document editing platform, inspired by
 - Backend built with Express and TypeScript for real-time collaboration
 - User data and authentication handled by Go (Fiber) with PostgreSQL and Redis for session management
 - Containerized services using Docker for seamless deployment
+- Ai suggestions
 
 ## Tech Stack
 
