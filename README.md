@@ -25,7 +25,7 @@ This project is a real-time collaborative document editing platform, inspired by
 
 Make sure you have the following installed:
 
-- [Docker](https://www.docker.com/) (for containerized setup)
+- [Docker](https://www.docker.com/) and Docker-compose (for containerized setup)
 - [Node.js](https://nodejs.org/en/) (for frontend development and real-time backend)
 - [Go](https://golang.org/) (for authentication and user management backend)
 - [PostgreSQL](https://www.postgresql.org/) (for the database)
