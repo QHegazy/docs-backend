@@ -30,7 +30,7 @@ func NewServer() *http.Server {
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: 25 * time.Second,
 	}
 
 	return server
