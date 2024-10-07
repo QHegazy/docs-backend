@@ -1,29 +1,25 @@
-# Docs-Backend
+# Project docs
 
-This project is a real-time collaborative document editing platform, inspired by Google Docs. Users can create, edit, and share documents with real-time updates and secure authentication.
+One Paragraph of project description goes here
 
-## Features
+## Getting Started
 
-- Real-time document editing using Socket.io
-- Collaborative editing (multiple users can edit the same document simultaneously)
-- OAuth-based user authentication
-- Secure storage of user data and documents
-- Backend built with Express and TypeScript for real-time collaboration
-- User data and authentication handled by Go (Fiber) with PostgreSQL and Redis for session management
-- Containerized services using Docker for seamless deployment
-- Ai suggestions
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-## Tech Stack
+## MakeFile
 
-- **Backend**: 
-  - **Real-time collaboration**: [Express](https://expressjs.com/) + [Socket.io](https://socket.io/) with TypeScript
-  - **User authentication and data management**: [Go (Fiber)](https://gofiber.io/) with [PostgreSQL](https://www.postgresql.org/) and [Redis](https://redis.io/) for caching and session management
-- **Authentication**: OAuth 2.0 for secure user login
-- **WebSocket Communication**: Socket.io for real-time collaboration
+Run build make command with tests
 
-## Prerequisites
+```bash
+make all
+```
 
-Make sure you have the following installed:
+Build the application
+
+
+```bash
+make build
+```
 
 - [Docker](https://www.docker.com/) and Docker-compose (for containerized setup)
 - [Node.js](https://nodejs.org/en/) (for frontend development and real-time backend)
@@ -31,3 +27,45 @@ Make sure you have the following installed:
 - [PostgreSQL](https://www.postgresql.org/) (for the database)
 - [Redis](https://redis.io/) (for session management)
 
+
+Run the application
+
+```bash
+make run
+```
+
+Create DB container
+
+```bash
+make docker-run
+```
+
+Shutdown DB Container
+
+```bash
+make docker-down
+```
+
+DB Integrations Test:
+
+```bash
+make itest
+```
+
+Live reload the application:
+
+```bash
+make watch
+```
+
+Run the test suite:
+
+```bash
+make test
+```
+
+Clean up binary from the last build:
+
+```bash
+make clean
+```

@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
+	"docs/internal/server"
 	"fmt"
 	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"docs/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server) {
@@ -40,7 +39,7 @@ func main() {
 	go gracefulShutdown(server)
 
 	err := server.ListenAndServe()
-	if err != nil  {
+	if err != nil {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
 }

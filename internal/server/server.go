@@ -14,16 +14,14 @@ import (
 
 type Server struct {
 	port int
-
-	db database.Service
+	db   database.Connect
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
 		port: port,
-
-		db: database.New(),
+		db:   *database.New(),
 	}
 
 	// Declare Server config
@@ -32,7 +30,7 @@ func NewServer() *http.Server {
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: 25 * time.Second,
 	}
 
 	return server
