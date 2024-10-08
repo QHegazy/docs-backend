@@ -26,7 +26,7 @@ make build
 - [Go](https://golang.org/) (for authentication and user management backend)
 - [PostgreSQL](https://www.postgresql.org/) (for the database)
 - [Redis](https://redis.io/) (for session management)
-- Nginx  
+- Nginx 
 
 
 Run the application
