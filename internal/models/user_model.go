@@ -9,20 +9,13 @@ import (
 )
 
 type User struct {
-	Name     string
-	OauthID  string
-	ImageURL string
-	Email    string
+	Name     string `validate:"required,min=2,max=100"`
+	OauthID  string `validate:"required"`
+	ImageURL string `validate:"omitempty,url"`
+	Email    string `validate:"required,email"`
 }
 
-type Operations interface {
-	InsertUser(pool *pgxpool.Pool) error
-	UpdateUser(pool *pgxpool.Pool) error
-	DeleteUser(pool *pgxpool.Pool) error
-	QueryUser(pool *pgxpool.Pool) (User, error)
-}
-
-func (u *User) InsertUser(pool *pgxpool.Pool) error {
+func (u *User) Insert(pool *pgxpool.Pool) error {
 	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4)"
 	result, err := pool.Exec(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email)
 	if err != nil {
@@ -34,7 +27,7 @@ func (u *User) InsertUser(pool *pgxpool.Pool) error {
 	return nil
 }
 
-func (u *User) UpdateUser(pool *pgxpool.Pool, user User) error {
+func (u *User) Update(pool *pgxpool.Pool, user User) error {
 	updateSQL := "UPDATE users SET name = $1, oauth_id = $2, image_url = $3, email = $4 WHERE oauth_id = $5"
 
 	result, err := pool.Exec(context.Background(), updateSQL, u.Name, u.OauthID, u.ImageURL, user.Email, user.OauthID)
@@ -48,7 +41,7 @@ func (u *User) UpdateUser(pool *pgxpool.Pool, user User) error {
 	return nil
 }
 
-func (u *User) DeleteUser(pool *pgxpool.Pool, userID string) error {
+func (u *User) Delete(pool *pgxpool.Pool, userID string) error {
 	deleteSQL := "DELETE FROM users WHERE oauth_id = $1"
 
 	result, err := pool.Exec(context.Background(), deleteSQL, userID)
