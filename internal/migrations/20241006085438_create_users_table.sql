@@ -8,7 +8,7 @@ CREATE SCHEMA IF NOT EXISTS auth;
 
 
 CREATE TABLE IF NOT EXISTS public.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     oauth_id VARCHAR(100) UNIQUE NOT NULL,
     image_url VARCHAR(255) DEFAULT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 CREATE TABLE IF NOT EXISTS auth.sessions (
     session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id INT NOT NULL,
+    user_id UUID NOT NULl,
     token VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     online BOOLEAN NOT NULL DEFAULT FALSE,
@@ -40,15 +40,16 @@ CREATE TABLE IF NOT EXISTS public.documents (
 );
 
 CREATE TABLE IF NOT EXISTS public.document_ownership (
-    user_id INT NOT NULL,
+    user_id UUID NOT NULL,  
     document_id UUID NOT NULL,
     PRIMARY KEY (user_id, document_id),
     FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+
 CREATE TABLE IF NOT EXISTS public.document_contributions (
-    user_id INT NOT NULL,
+    user_id UUID NOT NULL,
     document_id UUID NOT NULL,
     PRIMARY KEY (user_id, document_id),
     FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE,

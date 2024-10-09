@@ -3,6 +3,8 @@ package models
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"fmt"
@@ -15,16 +17,18 @@ type User struct {
 	Email    string `validate:"required,email"`
 }
 
-func (u *User) Insert(pool *pgxpool.Pool) error {
-	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4)"
-	result, err := pool.Exec(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email)
+func (u *User) Insert(pool *pgxpool.Pool) (uuid.UUID, error) {
+	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING id"
+	var userID uuid.UUID // Change this type if your UUID is a different type
+
+	// Execute the query and retrieve the newly generated user ID
+	err := pool.QueryRow(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email).Scan(&userID)
 	if err != nil {
-		return fmt.Errorf("failed to insert user: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to insert user: %w", err)
 	}
 
-	rowsAffected := result.RowsAffected()
-	fmt.Printf("Inserted %d user(s) successfully.\n", rowsAffected)
-	return nil
+	fmt.Printf("Inserted user with ID: %s\n", userID)
+	return userID, nil
 }
 
 func (u *User) Update(pool *pgxpool.Pool, user User) error {
@@ -53,4 +57,23 @@ func (u *User) Delete(pool *pgxpool.Pool, userID string) error {
 
 	fmt.Printf("Deleted %d user(s) successfully.\n", rowsAffected)
 	return nil
+}
+
+func (u *User) UserIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uuid.UUID) {
+	querySQL := "SELECT user_id FROM users WHERE oauth_id = $1"
+	var userID uuid.UUID
+
+	err := pool.QueryRow(context.Background(), querySQL, OauthID).Scan(&userID)
+	if err != nil {
+		// If no rows are found, you can handle the error or return an indication via the channel
+		if err == pgx.ErrNoRows {
+			ch <- uuid.Nil
+		} else {
+			fmt.Println("Error querying user ID:", err)
+			close(ch) // Close the channel on error
+			return
+		}
+	}
+
+	ch <- userID
 }
