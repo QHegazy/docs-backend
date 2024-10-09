@@ -5,7 +5,6 @@ import (
 	"docs/internal/services"
 	"docs/internal/utils"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
@@ -42,7 +41,7 @@ func Login(user *goth.User, token chan<- string) {
 }
 
 func CreateSession(UserID uuid.UUID, userToken chan<- string) {
-	token, err := utils.GenerateToken(32)
+	token, err := utils.GenerateToken(128)
 	if err != nil {
 		userToken <- ""
 		fmt.Printf("Failed to generate token: %v\n", err)
@@ -52,7 +51,7 @@ func CreateSession(UserID uuid.UUID, userToken chan<- string) {
 	newSession := models.Session{
 		UserID:    UserID,
 		Token:     token,
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		ExpiresAt: utils.GenerateExpireDate(7),
 		Online:    true,
 	}
 

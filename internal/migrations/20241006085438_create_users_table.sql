@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS auth.sessions (
     online BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS public.documents (
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.document_ownership (
     user_id UUID NOT NULL,  
     document_id UUID NOT NULL,
     PRIMARY KEY (user_id, document_id),
-    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS public.document_contributions (
     user_id UUID NOT NULL,
     document_id UUID NOT NULL,
     PRIMARY KEY (user_id, document_id),
-    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 

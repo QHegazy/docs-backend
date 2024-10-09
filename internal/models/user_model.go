@@ -18,10 +18,9 @@ type User struct {
 }
 
 func (u *User) Insert(pool *pgxpool.Pool) (uuid.UUID, error) {
-	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING id"
+	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING user_id"
 	var userID uuid.UUID // Change this type if your UUID is a different type
 
-	// Execute the query and retrieve the newly generated user ID
 	err := pool.QueryRow(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email).Scan(&userID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to insert user: %w", err)

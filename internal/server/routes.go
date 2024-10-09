@@ -4,11 +4,15 @@ import (
 	"docs/internal/middlewares"
 	"docs/internal/response"
 	"docs/internal/services/auth"
+	docs "docs/internal/services/doc"
+	"docs/internal/utils"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
@@ -18,6 +22,9 @@ func oauth() {
 	clientId := os.Getenv("GOOGLE_CLIENT_ID")
 	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 	callbackUrl := os.Getenv("GOOGLE_CALLBACK_URL")
+	sessionSecret := os.Getenv(" SESSION_SECRET")
+	store := sessions.NewCookieStore([]byte(sessionSecret))
+	gothic.Store = store
 	goth.UseProviders(
 		google.New(
 			clientId,
@@ -36,7 +43,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(middlewares.InternalServerErrorMiddleware())
 	r.GET("auth/google/login", s.googleAuth)
 	r.GET("auth/google/callback", s.googleAuthCallback)
-	r.GET("/docs", middlewares.AuthMiddleware(), s.retraiveDocs)
+	r.GET("/docs", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), s.retraiveDocs)
+	r.GET("/", s.homeApi)
+
+	r.POST("newdoc", middlewares.AuthMiddleware(), s.newDoc)
 
 	return r
 }
@@ -60,7 +70,9 @@ func (s *Server) googleAuthCallback(c *gin.Context) {
 	}()
 	select {
 	case userToken := <-token:
-		c.SetCookie("lg", userToken, 604800, "/", "", false, true)
+		expireDate := utils.GenerateExpireDate(7)
+		c.SetCookie("lg", userToken, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
+
 		successfully := response.SuccessResponse{
 			BaseResponse: response.BaseResponse{
 				Status:  http.StatusOK,
@@ -84,4 +96,35 @@ func (s *Server) retraiveDocs(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, successfully)
 
+}
+
+func (s *Server) homeApi(c *gin.Context) {
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "successfull login",
+		},
+	}
+	c.JSON(http.StatusOK, successfully)
+
+}
+func (s *Server) newDoc(c *gin.Context) {
+	result := make(chan interface{})
+
+	go docs.CreateDoc(result)
+
+	res := <-result
+	if res == uuid.Nil {
+		return
+	}
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "Document created successfully",
+		},
+		Data: map[string]interface{}{
+			"mongoID": res,
+		},
+	}
+	c.JSON(http.StatusOK, successfully)
 }

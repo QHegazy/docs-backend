@@ -62,14 +62,16 @@ func (s *Session) Delete(pool *pgxpool.Pool) error {
 	return nil
 }
 
-func (s *Session) Query(pool *pgxpool.Pool) (Session, error) {
-	querySQL := "SELECT user_id, token, expires_at, online FROM auth.sessions WHERE user_id = $1 AND token = $2"
-	row := pool.QueryRow(context.Background(), querySQL, s.UserID, s.Token)
+func (s *Session) Query(pool *pgxpool.Pool, resultChan chan<- ResultChan[Session]) {
+	querySQL := "SELECT token, expires_at FROM auth.sessions WHERE token = $1"
+	row := pool.QueryRow(context.Background(), querySQL, s.Token)
 
 	var session Session
-	if err := row.Scan(&session.UserID, &session.Token, &session.ExpiresAt, &session.Online); err != nil {
-		return Session{}, fmt.Errorf("failed to query session: %w", err)
+	if err := row.Scan(&session.Token, &session.ExpiresAt); err != nil {
+		resultChan <- ResultChan[Session]{Error: err}
+		return
 	}
 
-	return session, nil
+	resultChan <- ResultChan[Session]{Data: session}
+
 }
