@@ -4,9 +4,11 @@ import (
 	"docs/internal/models"
 	"docs/internal/services"
 	"log"
+
+	"github.com/google/uuid"
 )
 
-func CreateDocOwner(userId string, docId string, res chan<- bool) {
+func CreateDocOwner(userId uuid.UUID, docId uuid.UUID, res chan<- bool) {
 	insert := services.Service.Conne.DbInsert
 	newDocContribution := models.DocumentOwnership{
 		UserID:     userId,

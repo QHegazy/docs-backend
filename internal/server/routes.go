@@ -1,6 +1,7 @@
 package server
 
 import (
+	dto "docs/internal/Dto"
 	"docs/internal/middlewares"
 	"docs/internal/response"
 	"docs/internal/services/auth"
@@ -38,15 +39,13 @@ func oauth() {
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 	expectedHost := os.Getenv("HOST")
-	r.Use(middlewares.SecurityMiddleware(expectedHost))
+	r.Use(middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
 	r.NoRoute(middlewares.NotFound)
-	r.Use(middlewares.InternalServerErrorMiddleware())
 	r.GET("auth/google/login", s.googleAuth)
 	r.GET("auth/google/callback", s.googleAuthCallback)
 	r.GET("/docs", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), s.retraiveDocs)
+	r.POST("new-doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), s.newDoc)
 	r.GET("/", s.homeApi)
-
-	r.POST("newdoc", middlewares.AuthMiddleware(), s.newDoc)
 
 	return r
 }
@@ -110,9 +109,19 @@ func (s *Server) homeApi(c *gin.Context) {
 }
 func (s *Server) newDoc(c *gin.Context) {
 	result := make(chan interface{})
-
-	go docs.CreateDoc(result)
-
+	var docPost dto.DocPost
+	c.ShouldBindBodyWithJSON(&docPost)
+	if err := c.ShouldBindBodyWithJSON(&docPost); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid request data",
+			},
+			Error: err.Error(),
+		})
+		return
+	}
+	go docs.CreateDoc(docPost, result)
 	res := <-result
 	if res == uuid.Nil {
 		return

@@ -4,9 +4,11 @@ import (
 	"docs/internal/models"
 	"docs/internal/services"
 	"log"
+
+	"github.com/google/uuid"
 )
 
-func CreateDocContribution(userId string, docId string, res chan<- bool) {
+func CreateDocContribution(userId uuid.UUID, docId uuid.UUID, res chan<- bool) {
 	insert := services.Service.Conne.DbInsert
 	newDocContribution := models.DocumentContribution{
 		UserID:     userId,

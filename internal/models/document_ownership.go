@@ -3,16 +3,17 @@ package models
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DocumentOwnership struct {
-	UserID     string `json:"user_id" validate:"required,len=36"`
-	DocumentID string `json:"document_id" validate:"required,len=36"`
+	UserID     uuid.UUID `json:"user_id" validate:"required,len=36"`
+	DocumentID uuid.UUID `json:"document_id" validate:"required,len=36"`
 }
 
 func (d *DocumentOwnership) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[string]) {
-	query := `INSERT INTO public.document_ownerships (user_id, document_id) VALUES ($1, $2) RETURNING document_id`
+	query := `INSERT INTO public.document_ownerships (user_id, document_id) VALUES ($1, $2)`
 
 	var docID string
 	err := pool.QueryRow(context.Background(), query, d.UserID, d.DocumentID).Scan(&docID)

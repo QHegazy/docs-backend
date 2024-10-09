@@ -17,7 +17,7 @@ func GenerateToken(length int) (string, error) {
 
 func GenerateExpireDate(days int) time.Time {
 	if days < 0 {
-		return time.Now().UTC() // Return current time if negative days are provided
+		return time.Now().UTC()
 	}
 	expire := time.Now().UTC().Add(time.Duration(days) * 24 * time.Hour)
 	return expire

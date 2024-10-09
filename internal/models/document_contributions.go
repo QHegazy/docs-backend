@@ -3,12 +3,13 @@ package models
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DocumentContribution struct {
-	UserID     string `json:"user_id" validate:"required,len=36"`
-	DocumentID string `json:"document_id" validate:"required,len=36"`
+	UserID     uuid.UUID `json:"user_id" validate:"required,len=36"`
+	DocumentID uuid.UUID `json:"document_id" validate:"required,len=36"`
 }
 
 func (d *DocumentContribution) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[string]) {
