@@ -1,12 +1,19 @@
 package server
 
 import (
+	dto "docs/internal/Dto"
 	"docs/internal/middlewares"
+	"docs/internal/response"
 	"docs/internal/services/auth"
+	docs "docs/internal/services/doc"
+	"docs/internal/utils"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
@@ -16,6 +23,9 @@ func oauth() {
 	clientId := os.Getenv("GOOGLE_CLIENT_ID")
 	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 	callbackUrl := os.Getenv("GOOGLE_CALLBACK_URL")
+	sessionSecret := os.Getenv(" SESSION_SECRET")
+	store := sessions.NewCookieStore([]byte(sessionSecret))
+	gothic.Store = store
 	goth.UseProviders(
 		google.New(
 			clientId,
@@ -29,29 +39,15 @@ func oauth() {
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 	expectedHost := os.Getenv("HOST")
-	r.Use(middlewares.SecurityMiddleware(expectedHost))
+	r.Use(middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
 	r.NoRoute(middlewares.NotFound)
-	r.Use(middlewares.InternalServerErrorMiddleware())
-	r.GET("/", s.HelloWorldHandler)
 	r.GET("auth/google/login", s.googleAuth)
 	r.GET("auth/google/callback", s.googleAuthCallback)
+	r.GET("/docs", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), s.retraiveDocs)
+	r.POST("new-doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), s.newDoc)
+	r.GET("/", s.homeApi)
 
 	return r
-}
-
-func (s *Server) HelloWorldHandler(c *gin.Context) {
-
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	// hello := models.User{
-	// 	Name:     uuid.NewString(),
-	// 	OauthID:  uuid.NewString(),
-	// 	ImageURL: uuid.NewString(),
-	// 	Email:    uuid.NewString(),
-	// }
-	// auth.Login(hello)
-	c.JSON(http.StatusOK, resp)
 }
 
 func (s *Server) googleAuth(c *gin.Context) {
@@ -66,11 +62,78 @@ func (s *Server) googleAuthCallback(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	go auth.Register(&user)
-	c.JSON(http.StatusOK, gin.H{
-		"data": gin.H{
-			"user":     user,
-			"provider": "google",
+	token := make(chan string)
+
+	go func() {
+		auth.Login(&user, token)
+	}()
+	select {
+	case userToken := <-token:
+		expireDate := utils.GenerateExpireDate(7)
+		c.SetCookie("lg", userToken, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
+
+		successfully := response.SuccessResponse{
+			BaseResponse: response.BaseResponse{
+				Status:  http.StatusOK,
+				Message: "successfull login",
+			},
+		}
+		c.SecureJSON(http.StatusOK, successfully)
+	case <-time.After(2 * time.Second):
+		c.SecureJSON(http.StatusGatewayTimeout, gin.H{"error": "Login request timed out"})
+		return
+	}
+
+}
+
+func (s *Server) retraiveDocs(c *gin.Context) {
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "successfull login",
 		},
-	})
+	}
+	c.JSON(http.StatusOK, successfully)
+
+}
+
+func (s *Server) homeApi(c *gin.Context) {
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "successfull login",
+		},
+	}
+	c.JSON(http.StatusOK, successfully)
+
+}
+func (s *Server) newDoc(c *gin.Context) {
+	result := make(chan interface{})
+	var docPost dto.DocPost
+	c.ShouldBindBodyWithJSON(&docPost)
+	if err := c.ShouldBindBodyWithJSON(&docPost); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid request data",
+			},
+			Error: err.Error(),
+		})
+		return
+	}
+	go docs.CreateDoc(docPost, result)
+	res := <-result
+	if res == uuid.Nil {
+		return
+	}
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "Document created successfully",
+		},
+		Data: map[string]interface{}{
+			"mongoID": res,
+		},
+	}
+	c.JSON(http.StatusOK, successfully)
 }

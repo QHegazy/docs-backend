@@ -24,7 +24,7 @@ func (s *Session) Validate() error {
 	validate := validator.New()
 	return validate.Struct(s)
 }
-func (s *Session) InsertSession(pool *pgxpool.Pool) error {
+func (s *Session) Insert(pool *pgxpool.Pool) error {
 	insertSQL := "INSERT INTO auth.sessions (user_id, token, expires_at, online) VALUES ($1, $2, $3, $4)"
 	result, err := pool.Exec(context.Background(), insertSQL, s.UserID, s.Token, s.ExpiresAt, s.Online)
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *Session) InsertSession(pool *pgxpool.Pool) error {
 	return nil
 }
 
-func (s *Session) UpdateSession(pool *pgxpool.Pool) error {
+func (s *Session) Update(pool *pgxpool.Pool) error {
 	updateSQL := "UPDATE auth.sessions SET token = $1, expires_at = $2, online = $3 WHERE user_id = $4 AND token = $5"
 
 	result, err := pool.Exec(context.Background(), updateSQL, s.Token, s.ExpiresAt, s.Online, s.UserID, s.Token)
@@ -49,7 +49,7 @@ func (s *Session) UpdateSession(pool *pgxpool.Pool) error {
 	return nil
 }
 
-func (s *Session) DeleteSession(pool *pgxpool.Pool) error {
+func (s *Session) Delete(pool *pgxpool.Pool) error {
 	deleteSQL := "DELETE FROM auth.sessions WHERE user_id = $1 AND token = $2"
 
 	result, err := pool.Exec(context.Background(), deleteSQL, s.UserID, s.Token)
@@ -62,14 +62,16 @@ func (s *Session) DeleteSession(pool *pgxpool.Pool) error {
 	return nil
 }
 
-func (s *Session) QuerySession(pool *pgxpool.Pool) (Session, error) {
-	querySQL := "SELECT user_id, token, expires_at, online FROM auth.sessions WHERE user_id = $1 AND token = $2"
-	row := pool.QueryRow(context.Background(), querySQL, s.UserID, s.Token)
+func (s *Session) Query(pool *pgxpool.Pool, resultChan chan<- ResultChan[Session]) {
+	querySQL := "SELECT token, expires_at FROM auth.sessions WHERE token = $1"
+	row := pool.QueryRow(context.Background(), querySQL, s.Token)
 
 	var session Session
-	if err := row.Scan(&session.UserID, &session.Token, &session.ExpiresAt, &session.Online); err != nil {
-		return Session{}, fmt.Errorf("failed to query session: %w", err)
+	if err := row.Scan(&session.Token, &session.ExpiresAt); err != nil {
+		resultChan <- ResultChan[Session]{Error: err}
+		return
 	}
 
-	return session, nil
+	resultChan <- ResultChan[Session]{Data: session}
+
 }

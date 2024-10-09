@@ -12,5 +12,5 @@ type SuccessResponse struct {
 
 type ErrorResponse struct {
 	BaseResponse
-	Error string `json:"error"`
+	Error any `json:"error"`
 }
