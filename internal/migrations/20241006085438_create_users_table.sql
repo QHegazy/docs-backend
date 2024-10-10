@@ -2,11 +2,11 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 -- +goose StatementEnd
+SET search_path TO public, auth;
 
-CREATE SCHEMA IF NOT EXISTS public;
 CREATE SCHEMA IF NOT EXISTS auth;
-CREATE TYPE document_permission AS ENUM ('editable', 'readonly');
-CREATE TYPE document_role AS ENUM ('viewer', 'editor');
+CREATE SCHEMA IF NOT EXISTS public;
+CREATE TYPE document_role AS ENUM ('viewer', 'editor','contributor');
 
 
 CREATE TABLE IF NOT EXISTS public.users (
@@ -20,17 +20,18 @@ CREATE TABLE IF NOT EXISTS public.users (
     deleted_at TIMESTAMP DEFAULT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS auth.sessions (
     session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULl,
+    user_id UUID NOT NULL,
     token VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     online BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL,  
     FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS public.documents (
     document_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  
@@ -44,10 +45,9 @@ CREATE TABLE IF NOT EXISTS public.documents (
 CREATE TABLE IF NOT EXISTS public.document_ownerships (
     user_id UUID NOT NULL,  
     document_id UUID NOT NULL,
-    permission document_permission DEFAULT 'editable', 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP DEFAULT NULL,
     PRIMARY KEY (user_id, document_id),
     FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -60,22 +60,24 @@ CREATE TABLE IF NOT EXISTS public.document_contributions (
     role document_role DEFAULT 'viewer', 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP DEFAULT NULL,
     PRIMARY KEY (user_id, document_id),
     FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS public.blocklist (
     blocker_id UUID NOT NULL,
     blocked_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP DEFAULT NULL,
     PRIMARY KEY (blocker_id, blocked_id),
     FOREIGN KEY (blocker_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_id) REFERENCES public.users(user_id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS public.document_access (
     access_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL,
@@ -87,8 +89,8 @@ CREATE TABLE IF NOT EXISTS public.document_access (
     FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_document_ownership_user ON public.document_ownership(user_id);
-CREATE INDEX IF NOT EXISTS idx_document_ownership_doc ON public.document_ownership(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_ownerships_user ON public.document_ownerships(user_id);
+CREATE INDEX IF NOT EXISTS idx_document_ownerships_doc ON public.document_ownerships(document_id);
 CREATE INDEX IF NOT EXISTS idx_document_contributions_user ON public.document_contributions(user_id);
 CREATE INDEX IF NOT EXISTS idx_document_contributions_doc ON public.document_contributions(document_id);
 CREATE INDEX IF NOT EXISTS idx_document_access_id ON public.document_access(access_id);
@@ -99,6 +101,7 @@ CREATE INDEX IF NOT EXISTS idx_document_contributions_deleted_at ON public.docum
 CREATE INDEX IF NOT EXISTS idx_blocklist_deleted_at ON public.blocklist(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_document_access_deleted_at ON public.document_access(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_deleted_at ON auth.sessions(deleted_at);
+
 
 
 -- +goose StatementBegin
@@ -123,7 +126,6 @@ CREATE TRIGGER update_document_ownerships_updated_at
 BEFORE UPDATE ON public.document_ownerships
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Triggers for public.document_contributions
 CREATE TRIGGER update_document_contributions_updated_at
 BEFORE UPDATE ON public.document_contributions
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -147,7 +149,6 @@ DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
 DROP TRIGGER IF EXISTS update_document_ownerships_updated_at ON public.document_ownerships;
 DROP TRIGGER IF EXISTS update_document_contributions_updated_at ON public.document_contributions;
 DROP FUNCTION IF EXISTS update_updated_at_column();
-DROP TYPE IF EXISTS document_permission;
 DROP TYPE IF EXISTS document_role;
 DROP INDEX IF EXISTS idx_document_ownership_user;
 DROP INDEX IF EXISTS idx_document_ownership_doc;

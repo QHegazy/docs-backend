@@ -1,17 +1,18 @@
 # Simple Makefile for a Go project
 
-# Build the application
+# Default target when `make` is run without arguments
 all: build test
 
+# Build the application
 build:
 	@echo "Building..."
-	
-	
 	@go build -o main cmd/api/main.go
 
 # Run the application
 run:
+	@echo "Running the application..."
 	@go run cmd/api/main.go
+
 # Create DB container
 docker-run:
 	@if docker compose up 2>/dev/null; then \
@@ -34,7 +35,8 @@ docker-down:
 test:
 	@echo "Testing..."
 	@go test ./... -v
-# Integrations Tests for the application
+
+# Run integration tests for the application
 itest:
 	@echo "Running integration tests..."
 	@go test ./internal/database -v
@@ -44,17 +46,18 @@ clean:
 	@echo "Cleaning..."
 	@rm -f main
 
-# Live Reload
+# Live Reload using air
 watch:
 	@if command -v air > /dev/null; then \
+            echo "Watching for changes..."; \
             air; \
-            echo "Watching...";\
         else \
             read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
             if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
                 go install github.com/air-verse/air@latest; \
+                echo "Installing air..."; \
                 air; \
-                echo "Watching...";\
+                echo "Watching for changes..."; \
             else \
                 echo "You chose not to install air. Exiting..."; \
                 exit 1; \
