@@ -53,6 +53,9 @@ jobs:
           done
 
 
+      - name: Install Goose CLI
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+      
       - name: Run Migrations
         env:
           DB_DATABASE: test_db
@@ -60,8 +63,8 @@ jobs:
           DB_PASSWORD: test_db_1546
           DB_PORT: 5432
         run: |
-          # Run Goose migrations
           goose -dir migrations postgres "user=$DB_USERNAME password=$DB_PASSWORD dbname=$DB_DATABASE host=localhost port=$DB_PORT sslmode=disable" up
+      
 
       - name: Run Tests
         env:
