@@ -16,7 +16,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres: latest
+        image: postgres:latest
         env:
           POSTGRES_DB: test_db         
           POSTGRES_USER: test_moas       
