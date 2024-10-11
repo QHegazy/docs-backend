@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	"docs/internal/handlers"
 )
 
 type Server struct {
@@ -16,14 +16,12 @@ type Server struct {
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	NewServer := &Server{
+	newServer := &Server{
 		port: port,
 	}
-
-	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
-		Handler:      NewServer.RegisterRoutes(),
+		Addr:         fmt.Sprintf(":%d", newServer.port),
+		Handler:      handlers.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 25 * time.Second,
