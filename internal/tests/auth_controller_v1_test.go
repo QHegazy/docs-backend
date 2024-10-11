@@ -50,7 +50,7 @@ func TestGoogleAuthCallback(t *testing.T) {
 	gothic.CompleteUserAuth = func(w http.ResponseWriter, r *http.Request) (goth.User, error) {
 		// Return a mock user instead of calling the real OAuth process
 		return goth.User{
-			UserID:   "1234",
+			UserID:   "1234s",
 			Provider: "google",
 			Name:     "John Doe",
 			Email:    "john.doe@example.com",

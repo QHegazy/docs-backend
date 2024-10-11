@@ -4,15 +4,30 @@ on:
   push:
     branches:
       - develop
-      - main
+      - master
   pull_request:
     branches:
       - develop
-      - main
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: test_db         
+          POSTGRES_USER: test_moas       
+          POSTGRES_PASSWORD: test_db_1546 
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U $POSTGRES_USER"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout Code
@@ -21,10 +36,36 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.20'  
+          go-version: '1.23'  
 
       - name: Install Dependencies
         run: go mod tidy
 
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U $POSTGRES_USER; then
+              echo "Postgres is ready!"
+              break
+            fi
+            echo "Waiting for Postgres..."
+            sleep 1
+          done
+
+      - name: Run Migrations
+        env:
+          DB_DATABASE: test_db
+          DB_USERNAME: test_moas
+          DB_PASSWORD: test_db_1546
+          DB_PORT: 5432
+        run: |
+          # Run Goose migrations
+          goose -dir migrations postgres "user=$DB_USERNAME password=$DB_PASSWORD dbname=$DB_DATABASE host=localhost port=$DB_PORT sslmode=disable" up
+
       - name: Run Tests
+        env:
+          DB_DATABASE: test_db
+          DB_USERNAME: test_moas
+          DB_PASSWORD: test_db_1546
+          DB_PORT: 5432
         run: go test ./internal/tests
