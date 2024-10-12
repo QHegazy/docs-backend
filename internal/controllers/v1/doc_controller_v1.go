@@ -12,7 +12,6 @@ import (
 
 func NewDoc(c *gin.Context) {
 	var docPost dto.DocPost
-
 	if err := c.ShouldBindJSON(&docPost); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
@@ -46,7 +45,6 @@ func NewDoc(c *gin.Context) {
 }
 
 func RetrieveDocs(c *gin.Context) {
-	// Your logic here to retrieve docs
 	successfully := response.SuccessResponse{
 		BaseResponse: response.BaseResponse{
 			Status:  http.StatusOK,

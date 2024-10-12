@@ -7,7 +7,7 @@ type BaseResponse struct {
 
 type SuccessResponse struct {
 	BaseResponse
-	Data any `json:"data"`
+	Data map[string]interface{} `json:"data"`
 }
 
 type ErrorResponse struct {

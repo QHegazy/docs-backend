@@ -27,24 +27,21 @@ func (d *DocumentContribution) Insert(pool *pgxpool.Pool, resultChan chan<- Resu
 	resultChan <- ResultChan[string]{Data: "success"}
 }
 
-// Update the role of a document contribution based on user ID and document ID.
 func (d *DocumentContribution) Update(pool *pgxpool.Pool, resultChan chan<- ResultChan[error]) {
-	query := `UPDATE public.document_contributions SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND document_id = $3`
+	query := `UPDATE public.document_contributions SET role = $1 WHERE user_id = $2 AND document_id = $3`
 	_, err := pool.Exec(context.Background(), query, d.Role, d.UserID, d.DocumentID)
 	resultChan <- ResultChan[error]{Error: err}
 }
 
-// Soft delete a document contribution by setting deleted_at.
 func (d *DocumentContribution) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[error]) {
 	query := `UPDATE public.document_contributions SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND document_id = $2`
 	_, err := pool.Exec(context.Background(), query, d.UserID, d.DocumentID)
 	resultChan <- ResultChan[error]{Error: err}
 }
 
-// Query a document contribution by user ID and document ID.
 func (d *DocumentContribution) Query(pool *pgxpool.Pool, resultChan chan<- ResultChan[*DocumentContribution]) {
 	var doc DocumentContribution
-	query := `SELECT user_id, document_id, role, created_at, updated_at, deleted_at FROM public.document_contributions WHERE user_id = $1 AND document_id = $2`
+	query := `SELECT user_id, document_id, role FROM public.document_contributions WHERE user_id = $1 AND document_id = $2`
 	err := pool.QueryRow(context.Background(), query, d.UserID, d.DocumentID).Scan(&doc.UserID, &doc.DocumentID, &doc.Role)
 	if err != nil {
 		resultChan <- ResultChan[*DocumentContribution]{Error: err}

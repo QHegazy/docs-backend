@@ -68,11 +68,11 @@ CREATE TABLE IF NOT EXISTS public.document_contributions (
 
 
 CREATE TABLE IF NOT EXISTS public.blocklist (
-    blocker_id UUID NOT NULL,
-    blocked_id UUID NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP DEFAULT NULL,
+    document_id UUID NOT NULL,
+    blocked_id  UUID NOT NULL,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMP DEFAULT NULL,
     PRIMARY KEY (blocker_id, blocked_id),
     FOREIGN KEY (blocker_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_id) REFERENCES public.users(user_id) ON DELETE CASCADE

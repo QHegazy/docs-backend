@@ -15,12 +15,12 @@ func RegisterRoutes() *gin.Engine {
 	expectedHost := os.Getenv("HOST")
 	r.Use(middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
 	r.NoRoute(middlewares.NotFound)
+	r.GET("/auth/google/callback", v1.GoogleAuthCallback)
 	v1Group := r.Group("v1")
 	{
 		v1Group.GET("/auth/google/login", v1.GoogleAuth)
-		v1Group.GET("/auth/google/callback", v1.GoogleAuthCallback)
 		v1Group.GET("/docs", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
-		v1Group.POST("/new-doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
+		v1Group.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
 	}
 
 	return r

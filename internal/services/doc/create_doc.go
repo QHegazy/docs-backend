@@ -26,8 +26,13 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 	}()
 
 	insertResult := <-result
+	document_contribution := models.DocumentContribution{
+		UserID:     docPost.UserUuid,
+		DocumentID: insertResult.Data,
+		Role:       "editor",
+	}
 
-	go CreateDocContribution(docPost.UserUuid, insertResult.Data, committed)
+	go CreateDocContribution(document_contribution, committed)
 	go CreateDocOwner(docPost.UserUuid, insertResult.Data, committed)
 
 	// Loop to wait for signals from committed channel
