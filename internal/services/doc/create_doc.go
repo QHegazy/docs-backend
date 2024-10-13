@@ -17,7 +17,7 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 
 	newDoc := models.Document{
 		DocumentName: docPost.DocName,
-		MongoID:      "test",
+		MongoID:      "tests",
 	}
 
 	go func() {
@@ -50,3 +50,5 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 	res <- insertResult.Data
 	defer close(res)
 }
+
+

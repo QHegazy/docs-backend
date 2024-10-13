@@ -1,13 +1,13 @@
 package response
 
 type BaseResponse struct {
-	Status  int    `int:"status"`
+	Status  int    `json:"status"` // Corrected tag
 	Message string `json:"message"`
 }
 
 type SuccessResponse struct {
 	BaseResponse
-	Data map[string]interface{} `json:"data"`
+	Data any `json:"data"`
 }
 
 type ErrorResponse struct {
