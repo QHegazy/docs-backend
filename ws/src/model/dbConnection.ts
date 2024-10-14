@@ -17,5 +17,4 @@ async function dbConnect() {
   }
 }
 
-// Export the dbConnect function
 export default dbConnect;

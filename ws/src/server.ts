@@ -1,19 +1,17 @@
 import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import cors from "cors"; // Add CORS support
-import { config } from "dotenv"; // For environment variables
-
-// Load environment variables
+import cors from "cors"; 
+import { config } from "dotenv"; 
+import dbConnect from "./model/dbConnection";
 config();
 var dd: any;
-// Initialize Express app
 const app = express();
 app.use(cors());
 
 // Initialize HTTP server
 const server = createServer(app);
-
+dbConnect();
 // Initialize Socket.IO server
 const io = new Server(server, {
   cors: {

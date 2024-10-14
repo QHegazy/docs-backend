@@ -1,6 +1,5 @@
 import { Schema, model } from "mongoose";
 
-// Define the schema for Quill data as a Delta JSON
 const quillDataSchema = new Schema(
   {
     title: {
@@ -29,7 +28,6 @@ const quillDataSchema = new Schema(
   { timestamps: true } 
 );
 
-// Create the model from the schema
 const QuillData = model("QuillData", quillDataSchema);
 
 export { QuillData };
