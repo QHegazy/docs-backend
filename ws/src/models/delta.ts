@@ -13,7 +13,7 @@ const quillDataSchema = new Schema(
     },
     createdAt: {
       type: Date,
-      default: Date.now, 
+      default: Date.now,
     },
     updatedAt: {
       type: Date,
@@ -21,9 +21,7 @@ const quillDataSchema = new Schema(
     },
     deletedAt: {
       type: Date,
-      default: Date.now,
     },
-    
   },
   { timestamps: true } 
 );

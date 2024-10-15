@@ -1,16 +1,14 @@
 version: '3.8'
 
 services:
-  psql:
-    image: postgres:latest
+  mongodb:
+    build:
+      context: .
     environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - DOC_USERNAME=${DOC_USERNAME}
+      - DOC_PASSWORD=${DOC_PASSWORD}
     ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - psql_volume:/var/lib/postgresql/data
-
-volumes:
-  psql_volume:
+      - "27017:27017"
