@@ -32,6 +32,17 @@ func gracefulShutdown(apiServer *http.Server) {
 	log.Println("Server exiting")
 }
 
+// @title   Docs APIs
+// @version  1.0
+// @description Testing Swagger APIs.
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email mohamed__hegazy@outlook.com
+// @license.name MIT License
+// @license.url https://github.com/aws/mit-0
+// @host   localhost:8080
+// @BasePath  /v1
+// @schemes  http https
 func main() {
 
 	server := server.NewServer()

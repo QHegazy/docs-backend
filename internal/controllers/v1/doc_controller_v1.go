@@ -10,6 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// @Summary Creates a new document
+// @Description Takes in document data and creates a new document
+// @Tags Document
+// @Accept  json
+// @Produce  json
+// @Param   docPost body dto.DocPost true "Document Post Data"
+// @Success 200 {object} response.SuccessResponse{data=map[string]interface{}}
+// @Failure 400 {object} response.ErrorResponse "Invalid request data"
+// @Failure 500 {object} response.ErrorResponse "Invalid request data"
+// @Router /doc [post]
 func NewDoc(c *gin.Context) {
 	var docPost dto.DocPost
 	if err := c.ShouldBindJSON(&docPost); err != nil {
@@ -44,6 +54,13 @@ func NewDoc(c *gin.Context) {
 	c.JSON(http.StatusOK, successfully)
 }
 
+// @Summary Retrieves all documents
+// @Description Fetches all documents in the database
+// @Tags Document
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} response.SuccessResponse "Documents retrieved successfully"
+// @Router /doc [get]
 func RetrieveDocs(c *gin.Context) {
 	successfully := response.SuccessResponse{
 		BaseResponse: response.BaseResponse{

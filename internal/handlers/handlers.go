@@ -1,11 +1,16 @@
 package handlers
 
 import (
+	// your generated docs
 	v1 "docs/internal/controllers/v1"
 	"docs/internal/middlewares"
 	"os"
 
+	_ "docs/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func RegisterRoutes() *gin.Engine {
@@ -16,12 +21,24 @@ func RegisterRoutes() *gin.Engine {
 	r.Use(middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
 	r.NoRoute(middlewares.NotFound)
 	r.GET("/auth/google/callback", v1.GoogleAuthCallback)
+
 	v1Group := r.Group("v1")
 	{
+		// @Summary Login
+		// @Description Login endpoint
+		// @Tags Auth
+		// @Produce json
+		// @Param credentials body LoginDto true "Login credentials"
+		// @Success 200 {object} TokenResponse
+		// @Router /auth/login [post]
+
 		v1Group.GET("/auth/google/login", v1.GoogleAuth)
-		v1Group.GET("/docs", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
+		v1Group.GET("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
 		v1Group.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
 	}
+
+	// Swagger route
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
