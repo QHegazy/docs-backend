@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"docs/internal/response"
 	"docs/internal/services/auth"
 	"docs/internal/utils"
 	"net/http"
@@ -21,6 +20,7 @@ func initOAuth() {
 	callbackUrl := os.Getenv("GOOGLE_CALLBACK_URL")
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	store := sessions.NewCookieStore([]byte(sessionSecret))
+
 	gothic.Store = store
 	goth.UseProviders(
 		google.New(
@@ -50,19 +50,14 @@ func GoogleAuthCallback(c *gin.Context) {
 	go func() {
 		auth.Login(&user, token)
 	}()
+	frontend := os.Getenv("FRONTENDREDIRECT")
 
 	select {
 	case userToken := <-token:
 		expireDate := utils.GenerateExpireDate(7)
 		c.SetCookie("lg", userToken, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
 
-		successfully := response.SuccessResponse{
-			BaseResponse: response.BaseResponse{
-				Status:  http.StatusOK,
-				Message: "Successful login",
-			},
-		}
-		c.SecureJSON(http.StatusOK, successfully)
+		c.Redirect(http.StatusPermanentRedirect, frontend)
 	case <-time.After(2 * time.Second):
 		c.SecureJSON(http.StatusGatewayTimeout, gin.H{"error": "Login request timed out"})
 	}

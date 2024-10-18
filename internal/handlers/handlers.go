@@ -18,26 +18,20 @@ func RegisterRoutes() *gin.Engine {
 	r := gin.Default()
 
 	expectedHost := os.Getenv("HOST")
-	r.Use(middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
+
+	r.Use(middlewares.CORSMiddleware(), middlewares.InternalServerErrorMiddleware(), middlewares.SecurityMiddleware(expectedHost))
 	r.NoRoute(middlewares.NotFound)
 	r.GET("/auth/google/callback", v1.GoogleAuthCallback)
 
 	v1Group := r.Group("v1")
 	{
-		// @Summary Login
-		// @Description Login endpoint
-		// @Tags Auth
-		// @Produce json
-		// @Param credentials body LoginDto true "Login credentials"
-		// @Success 200 {object} TokenResponse
-		// @Router /auth/login [post]
 
 		v1Group.GET("/auth/google/login", v1.GoogleAuth)
 		v1Group.GET("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
 		v1Group.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
+		v1Group.GET("/authorize", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.Authorize_v1)
 	}
 
-	// Swagger route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r

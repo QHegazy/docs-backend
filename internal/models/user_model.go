@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,55 +9,62 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// User represents a user in the system.
 type User struct {
-	Name     string `validate:"required,min=2,max=100"`
-	OauthID  string `validate:"required"`
-	ImageURL string `validate:"omitempty,url"`
-	Email    string `validate:"required,email"`
+	UserID   uuid.UUID `json:"user_id"`
+	Name     string    `validate:"required,min=2,max=100"`
+	OauthID  string    `validate:"required"`
+	ImageURL string    `validate:"omitempty,url"`
+	Email    string    `validate:"required,email"`
 }
 
-func (u *User) Insert(pool *pgxpool.Pool) (uuid.UUID, error) {
+// Insert inserts a new user into the database and sends the result to the channel.
+func (u *User) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[uuid.UUID]) {
 	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING user_id"
-	var userID uuid.UUID // Change this type if your UUID is a different type
+	var userID uuid.UUID
 
 	err := pool.QueryRow(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email).Scan(&userID)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to insert user: %w", err)
+		resultChan <- ResultChan[uuid.UUID]{Error: fmt.Errorf("failed to insert user: %w", err)}
+		return
 	}
 
 	fmt.Printf("Inserted user with ID: %s\n", userID)
-	return userID, nil
+	resultChan <- ResultChan[uuid.UUID]{Data: userID}
 }
 
-func (u *User) Update(pool *pgxpool.Pool, user User) error {
+// Update updates an existing user in the database and sends the result to the channel.
+func (u *User) Update(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
 	updateSQL := "UPDATE users SET name = $1, oauth_id = $2, image_url = $3, email = $4 WHERE oauth_id = $5"
 
-	result, err := pool.Exec(context.Background(), updateSQL, u.Name, u.OauthID, u.ImageURL, user.Email, user.OauthID)
+	result, err := pool.Exec(context.Background(), updateSQL, u.Name, u.OauthID, u.ImageURL, u.Email, u.OauthID)
 	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
+		resultChan <- ResultChan[int64]{Error: fmt.Errorf("failed to update user: %w", err)}
+		return
 	}
 
 	rowsAffected := result.RowsAffected()
-
 	fmt.Printf("Updated %d user(s) successfully.\n", rowsAffected)
-	return nil
+	resultChan <- ResultChan[int64]{Data: rowsAffected}
 }
 
-func (u *User) Delete(pool *pgxpool.Pool, userID string) error {
+// Delete deletes a user from the database by OAuth ID and sends the result to the channel.
+func (u *User) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
 	deleteSQL := "DELETE FROM users WHERE oauth_id = $1"
 
-	result, err := pool.Exec(context.Background(), deleteSQL, userID)
+	result, err := pool.Exec(context.Background(), deleteSQL, u.OauthID)
 	if err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
+		resultChan <- ResultChan[int64]{Error: fmt.Errorf("failed to delete user: %w", err)}
+		return
 	}
 
 	rowsAffected := result.RowsAffected()
-
 	fmt.Printf("Deleted %d user(s) successfully.\n", rowsAffected)
-	return nil
+	resultChan <- ResultChan[int64]{Data: rowsAffected}
 }
 
-func (u *User) UserIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uuid.UUID) {
+// UserOauthIdQuery queries for a user's UUID by their OAuth ID and sends the result to the channel.
+func (u *User) UserOauthIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uuid.UUID) {
 	querySQL := "SELECT user_id FROM users WHERE oauth_id = $1"
 	var userID uuid.UUID
 
@@ -75,4 +81,16 @@ func (u *User) UserIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uuid.UU
 	}
 
 	ch <- userID
+}
+
+func (u *User) QueryById(pool *pgxpool.Pool, resultChan chan<- ResultChan[User]) {
+	querySQL := "SELECT name, oauth_id, image_url, email FROM users WHERE user_id = $1"
+	row := pool.QueryRow(context.Background(), querySQL, u.UserID)
+
+	var user User
+	if err := row.Scan(&user.Name, &user.OauthID, &user.ImageURL, &user.Email); err != nil {
+		fmt.Println("Error querying user:", err)
+		return
+	}
+	fmt.Println(user)
 }

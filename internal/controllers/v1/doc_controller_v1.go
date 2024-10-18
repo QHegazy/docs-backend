@@ -18,7 +18,7 @@ import (
 // @Param   docPost body dto.DocPost true "Document Post Data"
 // @Success 200 {object} response.SuccessResponse{data=map[string]interface{}}
 // @Failure 400 {object} response.ErrorResponse "Invalid request data"
-// @Failure 500 {object} response.ErrorResponse "Invalid request data"
+// @Failure 500 {object} response.ErrorResponse "Internal server error "
 // @Router /doc [post]
 func NewDoc(c *gin.Context) {
 	var docPost dto.DocPost
