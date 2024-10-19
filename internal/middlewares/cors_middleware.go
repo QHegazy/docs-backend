@@ -27,7 +27,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Header("X-Download-Options", "noopen")
 		c.Header("X-Permitted-Cross-Domain-Policies", "none")
 
-		// Handle preflight requests
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusOK)
 			return

@@ -56,9 +56,24 @@ func (s *Session) Update(pool *pgxpool.Pool, resultChan chan<- ResultChan[Sessio
 
 // Delete removes a session from the database
 func (s *Session) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[Session]) {
-	deleteSQL := "DELETE FROM auth.sessions WHERE user_id = $1 AND token = $2"
+	deleteSQL := "DELETE FROM auth.sessions WHERE user_id = $1"
 
-	result, err := pool.Exec(context.Background(), deleteSQL, s.UserID, s.Token)
+	result, err := pool.Exec(context.Background(), deleteSQL, s.UserID)
+	if err != nil {
+		resultChan <- ResultChan[Session]{Error: fmt.Errorf("failed to delete session: %w", err)}
+		return
+	}
+
+	rowsAffected := result.RowsAffected()
+	fmt.Printf("Deleted %d session(s) successfully.\n", rowsAffected)
+	resultChan <- ResultChan[Session]{Data: *s} // Optionally return the deleted session data
+}
+
+// DeleteByToken removes a session from the database by token
+func (s *Session) DeleteByToken(pool *pgxpool.Pool, resultChan chan<- ResultChan[Session]) {
+	deleteSQL := "DELETE FROM auth.sessions WHERE token = $1"
+
+	result, err := pool.Exec(context.Background(), deleteSQL, s.Token)
 	if err != nil {
 		resultChan <- ResultChan[Session]{Error: fmt.Errorf("failed to delete session: %w", err)}
 		return

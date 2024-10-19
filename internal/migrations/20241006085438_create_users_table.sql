@@ -113,7 +113,7 @@ CREATE INDEX IF NOT EXISTS idx_blocklist_deleted_at ON public.blocklist(deleted_
 CREATE INDEX IF NOT EXISTS idx_document_access_deleted_at ON public.document_access(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_deleted_at ON auth.sessions(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON auth.sessions(token);
-CREATE INDEX IF NOT EXISTS idx_users_user_id ON public.users(user_id)
+CREATE INDEX IF NOT EXISTS idx_users_user_id ON public.users(user_id);
 
 
 -- Function to update the updated_at timestamp

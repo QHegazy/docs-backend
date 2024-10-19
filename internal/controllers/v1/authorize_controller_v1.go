@@ -10,9 +10,9 @@ import (
 )
 
 type UserResponse struct {
-	Name     string `json:"name"`
-	ImageURL string `json:"image_url"`
-	Email    string `json:"email"`
+	Name     string `json:"Name"`
+	ImageURL string `json:"ImageURL"`
+	Email    string `json:"Email"`
 }
 
 func Authorize_v1(c *gin.Context) {
@@ -24,6 +24,7 @@ func Authorize_v1(c *gin.Context) {
 
 	result := <-resultchan
 
+	// Create a new instance of UserResponse
 	userResponse := UserResponse{
 		Name:     result.Data.Name,
 		ImageURL: result.Data.ImageURL,
@@ -35,6 +36,20 @@ func Authorize_v1(c *gin.Context) {
 			Status:  http.StatusOK,
 			Message: "Authorized",
 		},
-		Data: userResponse, 
+		Data: userResponse,
+	})
+}
+
+func Logout_v1(c *gin.Context) {
+	resultchan := make(chan models.ResultChan[models.Session])
+
+	go auth.Logout(c, resultchan)
+
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "Logged out",
+		},
+		Data: <-resultchan,
 	})
 }
