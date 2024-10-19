@@ -1,12 +1,24 @@
-FROM mongo:latest
+FROM golang:1.23 AS builder
 
-COPY init.js /docker-entrypoint-initdb.d/
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
 
 
-ENV MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-ENV MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-ENV MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
-ENV DOC_USERNAME=${DOC_USERNAME}
-ENV DOC_PASSWORD=${DOC_PASSWORD}
+RUN go build -o main cmd/api/main.go
 
-EXPOSE 27017
+FROM gcr.io/distroless/base
+
+WORKDIR /root/
+
+
+COPY --from=builder /app/main .
+
+EXPOSE 8080
+
+CMD ["./main"]
+

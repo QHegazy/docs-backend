@@ -1,0 +1,99 @@
+basePath: /v1
+definitions:
+  dto.DocPost:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      user_uuid:
+        type: string
+    required:
+    - name
+    - user_uuid
+    type: object
+  response.ErrorResponse:
+    properties:
+      error: {}
+      message:
+        type: string
+      status:
+        description: Corrected tag
+        type: integer
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        description: Corrected tag
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: mohamed__hegazy@outlook.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Testing Swagger APIs.
+  license:
+    name: MIT License
+    url: https://github.com/aws/mit-0
+  title: Docs APIs
+  version: "1.0"
+paths:
+  /doc:
+    get:
+      consumes:
+      - application/json
+      description: Fetches all documents in the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Documents retrieved successfully
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+      summary: Retrieves all documents
+      tags:
+      - Document
+    post:
+      consumes:
+      - application/json
+      description: Takes in document data and creates a new document
+      parameters:
+      - description: Document Post Data
+        in: body
+        name: docPost
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DocPost'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Creates a new document
+      tags:
+      - Document
+schemes:
+- http
+- https
+swagger: "2.0"
