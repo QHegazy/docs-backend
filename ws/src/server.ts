@@ -8,7 +8,7 @@ import { QuillData } from "./models/delta";
 import { getDoc, updateDoc } from "./services/docService";
 import { Types } from "mongoose";
 
-config(); // Load environment variables
+config(); 
 
 const app = express();
 app.use(cors({
