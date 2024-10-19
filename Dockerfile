@@ -1,4 +1,3 @@
-# Start with a base image that has Go installed
 FROM golang:1.23 AS builder
 
 WORKDIR /app
@@ -22,3 +21,4 @@ COPY --from=builder /app/main .
 EXPOSE 8080
 
 CMD ["./main"]
+

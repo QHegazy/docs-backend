@@ -17,7 +17,7 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 
 	newDoc := models.Document{
 		DocumentName: docPost.DocName,
-		MongoID:      "test",
+		MongoID:      "tests",
 	}
 
 	go func() {
@@ -26,8 +26,13 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 	}()
 
 	insertResult := <-result
+	document_contribution := models.DocumentContribution{
+		UserID:     docPost.UserUuid,
+		DocumentID: insertResult.Data,
+		Role:       "editor",
+	}
 
-	go CreateDocContribution(docPost.UserUuid, insertResult.Data, committed)
+	go CreateDocContribution(document_contribution, committed)
 	go CreateDocOwner(docPost.UserUuid, insertResult.Data, committed)
 
 	// Loop to wait for signals from committed channel
@@ -45,3 +50,5 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 	res <- insertResult.Data
 	defer close(res)
 }
+
+

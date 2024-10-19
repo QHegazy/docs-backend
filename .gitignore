@@ -33,3 +33,4 @@ main
 .DS_Store
 server.crt
 server.key
+/ws/node_modules
