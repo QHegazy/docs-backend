@@ -36,7 +36,7 @@ func Logout(c *gin.Context, resultchan chan<- models.ResultChan[models.Session])
 		session.DeleteByToken(delete, result)
 		c.SetCookie("lg", "", -1, "/", "", false, true)
 		resultchan <- <-result
-		
+
 		defer close(result)
 		defer close(resultchan)
 	}()

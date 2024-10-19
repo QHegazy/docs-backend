@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  mongodb:
+    build:
+      context: .
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - DOC_USERNAME=${DOC_USERNAME}
+      - DOC_PASSWORD=${DOC_PASSWORD}
+    ports:
+      - "27017:27017"
