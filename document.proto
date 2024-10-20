@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package document;
+
+option go_package="./document";
+
+service NewDocument {
+    rpc InsertDocument(DocumentRequest) returns (DocumentResponse);
+}
+service RemoveDocument{
+    rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+}
+
+message DocumentRequest {
+    string title   = 1;
+}
+
+message DocumentResponse {
+    string document_id = 1;
+}
+
+message DeleteDocumentRequest {
+    string document_id = 1;
+    string title       = 2;
+}
+
+message DeleteDocumentResponse{
+    string message =   1;
+}
