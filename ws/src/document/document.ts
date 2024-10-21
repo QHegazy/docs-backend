@@ -17,6 +17,15 @@ export interface DocumentResponse {
   document_id: string;
 }
 
+export interface DeleteDocumentRequest {
+  document_id: string;
+  title: string;
+}
+
+export interface DeleteDocumentResponse {
+  message: string;
+}
+
 function createBaseDocumentRequest(): DocumentRequest {
   return { title: "" };
 }
@@ -133,6 +142,140 @@ export const DocumentResponse: MessageFns<DocumentResponse> = {
   },
 };
 
+function createBaseDeleteDocumentRequest(): DeleteDocumentRequest {
+  return { document_id: "", title: "" };
+}
+
+export const DeleteDocumentRequest: MessageFns<DeleteDocumentRequest> = {
+  encode(message: DeleteDocumentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.document_id !== "") {
+      writer.uint32(10).string(message.document_id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteDocumentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteDocumentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.document_id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteDocumentRequest {
+    return {
+      document_id: isSet(object.document_id) ? globalThis.String(object.document_id) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+    };
+  },
+
+  toJSON(message: DeleteDocumentRequest): unknown {
+    const obj: any = {};
+    if (message.document_id !== "") {
+      obj.document_id = message.document_id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteDocumentRequest>, I>>(base?: I): DeleteDocumentRequest {
+    return DeleteDocumentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteDocumentRequest>, I>>(object: I): DeleteDocumentRequest {
+    const message = createBaseDeleteDocumentRequest();
+    message.document_id = object.document_id ?? "";
+    message.title = object.title ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteDocumentResponse(): DeleteDocumentResponse {
+  return { message: "" };
+}
+
+export const DeleteDocumentResponse: MessageFns<DeleteDocumentResponse> = {
+  encode(message: DeleteDocumentResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.message !== "") {
+      writer.uint32(10).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteDocumentResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteDocumentResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteDocumentResponse {
+    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  },
+
+  toJSON(message: DeleteDocumentResponse): unknown {
+    const obj: any = {};
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteDocumentResponse>, I>>(base?: I): DeleteDocumentResponse {
+    return DeleteDocumentResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteDocumentResponse>, I>>(object: I): DeleteDocumentResponse {
+    const message = createBaseDeleteDocumentResponse();
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
 export interface NewDocument {
   InsertDocument(request: DocumentRequest): Promise<DocumentResponse>;
 }
@@ -150,6 +293,26 @@ export class NewDocumentClientImpl implements NewDocument {
     const data = DocumentRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "InsertDocument", data);
     return promise.then((data) => DocumentResponse.decode(new BinaryReader(data)));
+  }
+}
+
+export interface RemoveDocument {
+  DeleteDocument(request: DeleteDocumentRequest): Promise<DeleteDocumentResponse>;
+}
+
+export const RemoveDocumentServiceName = "document.RemoveDocument";
+export class RemoveDocumentClientImpl implements RemoveDocument {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || RemoveDocumentServiceName;
+    this.rpc = rpc;
+    this.DeleteDocument = this.DeleteDocument.bind(this);
+  }
+  DeleteDocument(request: DeleteDocumentRequest): Promise<DeleteDocumentResponse> {
+    const data = DeleteDocumentRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "DeleteDocument", data);
+    return promise.then((data) => DeleteDocumentResponse.decode(new BinaryReader(data)));
   }
 }
 

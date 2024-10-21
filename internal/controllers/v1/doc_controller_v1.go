@@ -20,7 +20,7 @@ import (
 // @Failure 400 {object} response.ErrorResponse "Invalid request data"
 // @Failure 500 {object} response.ErrorResponse "Internal server error "
 // @Router /doc [post]
-func NewDoc(c *gin.Context) {
+func NewDoc(c *gin.Context, ) {
 	var docPost dto.DocPost
 	if err := c.ShouldBindJSON(&docPost); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{

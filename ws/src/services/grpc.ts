@@ -1,7 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import { loadSync } from '@grpc/proto-loader';
 import * as path from 'path';
-import { DocumentRequest, DocumentResponse } from '../document/document';
+import { DocumentRequest, DocumentResponse ,DeleteDocumentRequest,DeleteDocumentResponse} from '../document/document';
 import { authenticate } from '../middlewares/grpc_auth';
 
 
@@ -20,7 +20,18 @@ const insertDocument = (call: grpc.ServerUnaryCall<DocumentRequest, DocumentResp
   });
 };
 
+const deleteDocument = (call: grpc.ServerUnaryCall<DeleteDocumentRequest, DeleteDocumentResponse>, callback: grpc.sendUnaryData<DeleteDocumentResponse>) => {
+  authenticate(call, callback, () => {
+      const documentId = call.request.document_id;
+      if (!documentId) {
+          return callback({ code: grpc.status.INVALID_ARGUMENT, message: 'Document ID is required' }, null);
+      }
+      callback(null, { message: `Document ${documentId} deleted successfully` });
+  });
+};
 
 
 
-export { insertDocument,documentProto };
+
+
+export { insertDocument, deleteDocument, documentProto };

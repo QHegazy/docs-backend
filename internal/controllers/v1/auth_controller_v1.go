@@ -45,7 +45,7 @@ func GoogleAuthCallback(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	token := make(chan string)
+	token := make(chan auth.UserAuth)
 
 	go func() {
 		auth.Login(&user, token)
@@ -54,8 +54,10 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	select {
 	case userToken := <-token:
+		userID := utils.Obfuscate(user.UserID)
 		expireDate := utils.GenerateExpireDate(7)
-		c.SetCookie("lg", userToken, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
+		c.SetCookie("lg", userToken.Token, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
+		c.SetCookie("doc", userID, int(expireDate.Unix()-time.Now().Unix()), "/doc", "", false, true)
 
 		c.Redirect(http.StatusPermanentRedirect, frontend)
 	case <-time.After(2 * time.Second):
