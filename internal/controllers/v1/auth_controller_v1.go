@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"docs/internal/response"
 	"docs/internal/services/auth"
 	"docs/internal/utils"
 	"net/http"
@@ -54,13 +55,20 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	select {
 	case userToken := <-token:
-		userID := utils.Obfuscate(user.UserID)
+		userID := utils.Obfuscate(userToken.UserID)
 		expireDate := utils.GenerateExpireDate(7)
-		c.SetCookie("lg", userToken.Token, int(expireDate.Unix()-time.Now().Unix()), "/", "", false, true)
-		c.SetCookie("doc", userID, int(expireDate.Unix()-time.Now().Unix()), "/doc", "", false, true)
+		c.SetCookie("lg", userToken.Token, int(expireDate.Unix()-time.Now().Unix()), "/", "", true, true)
+		c.SetCookie("doc", userID, int(expireDate.Unix()-time.Now().Unix()), "/v1", "", true, true)
 
 		c.Redirect(http.StatusPermanentRedirect, frontend)
 	case <-time.After(2 * time.Second):
-		c.SecureJSON(http.StatusGatewayTimeout, gin.H{"error": "Login request timed out"})
+		res := response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Status:  http.StatusGatewayTimeout,
+				Message: "Login request timed out",
+			},
+			Error: "Login request timed out",
+		}
+		c.SecureJSON(http.StatusGatewayTimeout, res)
 	}
 }

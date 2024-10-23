@@ -39,8 +39,8 @@ func Login(user *goth.User, userAuth chan<- UserAuth) {
 			fmt.Printf("Error inserting new user: %v\n", result.Error)
 			return
 		}
-
-		go CreateSession(result.Data, userToken)
+		userID = result.Data
+		go CreateSession(userID, userToken)
 	}
 
 	go func() {
@@ -50,7 +50,7 @@ func Login(user *goth.User, userAuth chan<- UserAuth) {
 			return
 		}
 		userAuth <- UserAuth{
-			UserID: user.UserID,
+			UserID: userID.String(),
 			Token:  sessionToken,
 		}
 	}()

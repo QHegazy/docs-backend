@@ -19,6 +19,5 @@ func GenerateExpireDate(days int) time.Time {
 	if days < 0 {
 		return time.Now().UTC()
 	}
-	expire := time.Now().UTC().Add(time.Duration(days) * 24 * time.Hour)
-	return expire
+	return time.Now().UTC().Add(time.Duration(days) * 24 * time.Hour)
 }
