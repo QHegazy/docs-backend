@@ -24,10 +24,9 @@ func CreateDocOwner(userId uuid.UUID, docId uuid.UUID, res chan<- bool) {
 
 	insertResult := <-result
 	if insertResult.Error != nil {
-		log.Printf("Error inserting document: %v", insertResult.Error)
+		log.Printf("Error inserting document ownership: %v", insertResult.Error)
 		res <- false
 		return
 	}
 	res <- true
-	defer close(res)
 }

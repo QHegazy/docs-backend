@@ -3,16 +3,23 @@ import { PartialDocDto, DocDto } from "../Dto/doc";
 import { QuillData } from "../models/delta";
 import { SuccessResponse, ErrorResponse } from "../customResponse/customResponse";
 
-async function createDoc(docDto: DocDto): Promise<SuccessResponse<any> | ErrorResponse> {
+async function createDoc(title: string): Promise<SuccessResponse<any> | ErrorResponse> {
     try {
-        const newDoc = new QuillData(docDto);
+        const newDoc = new QuillData({
+            title: title,
+            content: ""
+        });
+        
         const savedDoc = await newDoc.save();
-
-        return {
+        var res: SuccessResponse<any> = {
             status: 201,
             message: "Document created successfully",
             data: savedDoc,
-        } as SuccessResponse<any>;
+        };
+        
+        
+        return res;
+
 
     } catch (error) {
         console.error("Error creating document:", error);

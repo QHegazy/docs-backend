@@ -40,3 +40,4 @@ func Logout(c *gin.Context, resultchan chan<- models.ResultChan[models.Session])
 	}()
 
 }
+ 

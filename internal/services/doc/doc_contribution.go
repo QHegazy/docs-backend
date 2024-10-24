@@ -10,7 +10,7 @@ func CreateDocContribution(document_contribution models.DocumentContribution, re
 	insert := services.Service.Conne.DbInsert
 	newDocContribution := models.DocumentContribution(document_contribution)
 
-	result := make(chan models.ResultChan[string])
+	result := make(chan models.ResultChan[string], 1)
 
 	go func() {
 		newDocContribution.Insert(insert, result)
@@ -19,15 +19,12 @@ func CreateDocContribution(document_contribution models.DocumentContribution, re
 
 	insertResult := <-result
 	if insertResult.Error != nil {
-		log.Printf("Error inserting document: %v", insertResult.Error)
+		log.Printf("Error inserting document contribution: %v", insertResult.Error)
 		res <- false
 		return
 	}
 	res <- true
-	defer close(res)
-	defer close(result)
 }
-
 func UpdateDocContribution(document_contribution models.DocumentContribution, res chan<- bool) {
 	update := services.Service.Conne.DbUpdate
 	newDocContribution := models.DocumentContribution(document_contribution)

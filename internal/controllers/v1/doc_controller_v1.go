@@ -7,7 +7,6 @@ import (
 	"docs/internal/utils"
 	"fmt"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

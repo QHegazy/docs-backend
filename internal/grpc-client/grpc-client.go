@@ -2,59 +2,61 @@ package grpc_client
 
 import (
 	"context"
-	pd "docs/internal/document" // Adjust the import path as necessary
+	dto "docs/internal/Dto"
+	pd "docs/internal/document"
 	"docs/internal/utils"
 	"log"
-	"net/http"
+	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
-const (
-	address = "localhost:50051"
+var (
+	address = os.Getenv("GRPC_SERVER")
 	timeout = 5 * time.Second
 )
 
-func GrpcClient(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func GrpcClient(docData dto.DocPost) chan string {
+	docIDChan := make(chan string)
 
-	conn, err := grpc.DialContext(ctx, address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Printf("Failed to connect: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to gRPC server"})
-		return
-	}
-	defer conn.Close()
+	go func() {
+		defer close(docIDChan)
 
-	client := pd.NewNewDocumentClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	// Get JWT token
-	token, err := utils.GetJWTToken("123s") // Pass user ID or any relevant identifier
-	if err != nil {
-		log.Printf("Could not get token: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get token"})
-		return
-	}
+		conn, err := grpc.DialContext(ctx, address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Printf("Failed to connect: %v", err)
+			return
+		}
+		defer conn.Close()
 
-	// Set the token in the metadata
-	md := metadata.New(map[string]string{"authorization": token})
-	ctx = metadata.NewOutgoingContext(ctx, md)
+		client := pd.NewNewDocumentClient(conn)
 
-	request := &pd.DocumentRequest{
-		Title: "Hello",
-	}
+		token, err := utils.GetJWTToken(docData.UserUuid.String())
+		if err != nil {
+			log.Printf("Could not get token: %v", err)
+			return
+		}
 
-	response, err := client.InsertDocument(ctx, request)
-	if err != nil {
-		log.Printf("Could not insert document: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert document"})
-		return
-	}
+		md := metadata.New(map[string]string{"authorization": token})
+		ctx = metadata.NewOutgoingContext(ctx, md)
 
-	c.JSON(http.StatusOK, response)
+		request := &pd.DocumentRequest{
+			Title: docData.DocName,
+		}
+
+		response, err := client.InsertDocument(ctx, request)
+		if err != nil {
+			log.Printf("Could not insert document: %v", err)
+			return
+		}
+		docID := response.DocumentId
+		docIDChan <- docID
+	}()
+	return docIDChan
 }
