@@ -7,7 +7,7 @@ import dbConnect from "./db/dbConnection";
 import { QuillData } from "./models/delta";
 import { getDoc, updateDoc } from "./services/docService";
 import { Types } from "mongoose";
-
+import {grpcServer} from "./grpc/grpc_server";
 config(); 
 
 const app = express();
@@ -18,7 +18,8 @@ app.use(cors({
 
 // Initialize HTTP server
 const server = createServer(app);
-dbConnect(); // Connect to MongoDB
+dbConnect(); 
+grpcServer()
 
 // Initialize Socket.IO server
 const io = new Server(server, {
@@ -86,13 +87,12 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle disconnections
+
   socket.on("disconnect", () => {
     console.log(`Client disconnected with id: ${socket.id}`);
   });
 });
 
-// API endpoint to get the latest document
 app.get("/doc/:id", async (req, res) => {
   try {
     const docId = req.params.id;
@@ -103,7 +103,6 @@ app.get("/doc/:id", async (req, res) => {
   }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

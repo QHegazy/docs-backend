@@ -4,8 +4,9 @@ import (
 	dto "docs/internal/Dto"
 	"docs/internal/response"
 	docs "docs/internal/services/doc"
+	"docs/internal/utils"
+	"fmt"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -20,9 +21,11 @@ import (
 // @Failure 400 {object} response.ErrorResponse "Invalid request data"
 // @Failure 500 {object} response.ErrorResponse "Internal server error "
 // @Router /doc [post]
+
 func NewDoc(c *gin.Context) {
-	var docPost dto.DocPost
-	if err := c.ShouldBindJSON(&docPost); err != nil {
+	userIdCookie, _ := c.Cookie("doc")
+	var newDoc dto.NewDoc
+	if err := c.ShouldBindJSON(&newDoc); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
 				Status:  http.StatusBadRequest,
@@ -32,7 +35,12 @@ func NewDoc(c *gin.Context) {
 		})
 		return
 	}
-
+	userId, _ := utils.Deobfuscate(userIdCookie)
+	fmt.Println(userId)
+	docPost := dto.DocPost{
+		UserUuid: uuid.MustParse(userId),
+		DocName:  newDoc.Title,
+	}
 	result := make(chan interface{})
 	go docs.CreateDoc(docPost, result)
 

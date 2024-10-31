@@ -28,8 +28,6 @@ func (u *User) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[uuid.UUID
 		resultChan <- ResultChan[uuid.UUID]{Error: fmt.Errorf("failed to insert user: %w", err)}
 		return
 	}
-
-	fmt.Printf("Inserted user with ID: %s\n", userID)
 	resultChan <- ResultChan[uuid.UUID]{Data: userID}
 }
 
