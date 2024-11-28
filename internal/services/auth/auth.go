@@ -18,7 +18,6 @@ type UserAuth struct {
 func Login(user *goth.User, userAuth chan<- UserAuth) {
 	userToken := make(chan string)
 	userID := checkUserByOauthID(user.UserID)
-
 	if userID != uuid.Nil {
 		go CreateSession(userID, userToken)
 	} else {

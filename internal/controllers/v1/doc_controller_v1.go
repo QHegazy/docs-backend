@@ -5,8 +5,8 @@ import (
 	"docs/internal/response"
 	docs "docs/internal/services/doc"
 	"docs/internal/utils"
-	"fmt"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -36,13 +36,12 @@ func NewDoc(c *gin.Context) {
 		return
 	}
 	userId, _ := utils.Deobfuscate(userIdCookie)
-	fmt.Println(userId)
 	docPost := dto.DocPost{
 		UserUuid: uuid.MustParse(userId),
 		DocName:  newDoc.Title,
 	}
 	result := make(chan interface{})
-	go docs.CreateDoc(docPost, result)
+	go docs.CreateDoc(docPost, newDoc.Public, result)
 
 	res := <-result
 	if res == uuid.Nil {
@@ -74,6 +73,43 @@ func RetrieveDocs(c *gin.Context) {
 		BaseResponse: response.BaseResponse{
 			Status:  http.StatusOK,
 			Message: "Documents retrieved successfully",
+		},
+	}
+	c.JSON(http.StatusOK, successfully)
+}
+
+// @Summary Deletes a document
+// @Description Deletes a document by ID
+// @Tags Document
+// @Accept  json
+// @Produce  json
+// @Param   doc_id path string true "Document ID"
+// @Success 200 {object} response.SuccessResponse "Document deleted successfully"
+// @Failure 400 {object} response.ErrorResponse "Invalid request data"
+// @Failure 500 {object} response.ErrorResponse "Internal server error "
+// @Router /doc/{doc_id} [delete]
+func DeleteDoc(c *gin.Context) {
+	userIdCookie, _ := c.Cookie("doc")
+	docId := c.Param("doc_id")
+	userId, _ := utils.Deobfuscate(userIdCookie)
+	docIdUuid, _ := uuid.Parse(docId)
+	userDoc := docs.UserDoc{
+		UserID:     uuid.MustParse(userId),
+		DocumentID: docIdUuid,
+	}
+	result := make(chan bool)
+	go docs.DeleteDoc(userDoc, result)
+
+	res := <-result
+	if !res {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete document"})
+		return
+	}
+
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "Document deleted successfully",
 		},
 	}
 	c.JSON(http.StatusOK, successfully)

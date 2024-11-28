@@ -48,9 +48,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	}
 	token := make(chan auth.UserAuth)
 
-	go func() {
-		auth.Login(&user, token)
-	}()
+	go auth.Login(&user, token)
+
 	frontend := os.Getenv("FRONTENDREDIRECT")
 
 	select {

@@ -20,7 +20,7 @@ type User struct {
 
 // Insert inserts a new user into the database and sends the result to the channel.
 func (u *User) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[uuid.UUID]) {
-	insertSQL := "INSERT INTO users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING user_id"
+	insertSQL := "INSERT INTO public.users (name, oauth_id, image_url, email) VALUES ($1, $2, $3, $4) RETURNING user_id"
 	var userID uuid.UUID
 
 	err := pool.QueryRow(context.Background(), insertSQL, u.Name, u.OauthID, u.ImageURL, u.Email).Scan(&userID)
@@ -33,7 +33,7 @@ func (u *User) Insert(pool *pgxpool.Pool, resultChan chan<- ResultChan[uuid.UUID
 
 // Update updates an existing user in the database and sends the result to the channel.
 func (u *User) Update(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
-	updateSQL := "UPDATE users SET name = $1, oauth_id = $2, image_url = $3, email = $4 WHERE oauth_id = $5"
+	updateSQL := "UPDATE public.users SET name = $1, oauth_id = $2, image_url = $3, email = $4 WHERE oauth_id = $5"
 
 	result, err := pool.Exec(context.Background(), updateSQL, u.Name, u.OauthID, u.ImageURL, u.Email, u.OauthID)
 	if err != nil {
@@ -48,7 +48,7 @@ func (u *User) Update(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
 
 // Delete deletes a user from the database by OAuth ID and sends the result to the channel.
 func (u *User) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
-	deleteSQL := "DELETE FROM users WHERE oauth_id = $1"
+	deleteSQL := "DELETE FROM public.users WHERE oauth_id = $1"
 
 	result, err := pool.Exec(context.Background(), deleteSQL, u.OauthID)
 	if err != nil {
@@ -63,7 +63,7 @@ func (u *User) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[int64]) {
 
 // UserOauthIdQuery queries for a user's UUID by their OAuth ID and sends the result to the channel.
 func (u *User) UserOauthIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uuid.UUID) {
-	querySQL := "SELECT user_id FROM users WHERE oauth_id = $1"
+	querySQL := "SELECT user_id FROM public.users WHERE oauth_id = $1"
 	var userID uuid.UUID
 
 	err := pool.QueryRow(context.Background(), querySQL, OauthID).Scan(&userID)
@@ -82,7 +82,7 @@ func (u *User) UserOauthIdQuery(pool *pgxpool.Pool, OauthID string, ch chan<- uu
 }
 
 func (u *User) QueryById(pool *pgxpool.Pool, resultChan chan<- ResultChan[User]) {
-	querySQL := "SELECT name, oauth_id, image_url, email FROM users WHERE user_id = $1"
+	querySQL := "SELECT name, oauth_id, image_url, email FROM public.users WHERE user_id = $1"
 	row := pool.QueryRow(context.Background(), querySQL, u.UserID)
 
 	var user User

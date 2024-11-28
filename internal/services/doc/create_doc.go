@@ -1,18 +1,25 @@
 package docs
 
 import (
+	"context"
 	dto "docs/internal/Dto"
 	grpc_client "docs/internal/grpc-client"
 	"docs/internal/models"
 	"docs/internal/services"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
 )
 
-func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
+type UserDoc struct {
+	UserID     uuid.UUID
+	DocumentID uuid.UUID
+}
+
+func CreateDoc(docPost dto.DocPost, public dto.Visibility, res chan<- interface{}) {
 	result := make(chan models.ResultChan[uuid.UUID], 1)
-	committed := make(chan bool, 2) // Buffered channel to prevent goroutine leaks
+	committed := make(chan bool, 4)
 	insert := services.Service.Conne.DbInsert
 
 	docIDChan := grpc_client.GrpcClient(docPost)
@@ -43,14 +50,27 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 
 	go CreateDocContribution(document_contribution, committed)
 	go CreateDocOwner(docPost.UserUuid, insertResult.Data, committed)
+	switch public {
+	case 1:
+		view := models.DocumentPublicView{
+			DocumentID: insertResult.Data,
+		}
+		go CreateDocPublicView(view, committed)
 
+	case 2:
+		edit := models.DocumentPublicEdit{
+			DocumentID: insertResult.Data,
+		}
+		go CreateDocPublicEdit(edit, committed)
+
+	}
 	success := true
 	for i := 0; i < 2; i++ {
 		if !<-committed {
 			success = false
 		}
 	}
-	close(committed) 
+	close(committed)
 
 	if !success {
 		res <- uuid.Nil
@@ -58,4 +78,106 @@ func CreateDoc(docPost dto.DocPost, res chan<- interface{}) {
 		res <- insertResult.Data
 	}
 	close(res)
+}
+
+func QueryAllUser(userDoc UserDoc, res chan<- *[]models.Document) {
+	query := services.Service.Conne.DbRead
+	newDoc := models.Document{
+		DocumentID: userDoc.DocumentID,
+	}
+
+	result := make(chan models.ResultChan[*[]models.Document])
+
+	go func() {
+		newDoc.QueryAllByUser(context.Background(), query, userDoc.UserID, result)
+		close(result)
+	}()
+
+	queryResult := <-result
+	if queryResult.Error != nil {
+		log.Printf("Error querying document: %v", queryResult.Error)
+		res <- nil
+		return
+	}
+	res <- queryResult.Data
+	defer close(res)
+	defer close(result)
+
+}
+
+func QueryDoc(userDoc UserDoc, res chan<- *models.Document) {
+	query := services.Service.Conne.DbRead
+	newDoc := models.Document{
+		DocumentID: userDoc.DocumentID,
+	}
+
+	result := make(chan models.ResultChan[*models.Document])
+
+	go func() {
+		newDoc.Query(query, result)
+		close(result)
+	}()
+
+	queryResult := <-result
+	if queryResult.Error != nil {
+		log.Printf("Error querying document: %v", queryResult.Error)
+		res <- nil
+		return
+	}
+	res <- queryResult.Data
+	defer close(res)
+	defer close(result)
+
+}
+func DeleteDoc(userDoc UserDoc, res chan<- bool) {
+	delete := services.Service.Conne.DbDelete
+	check := make(chan bool, 1)
+	result := make(chan models.ResultChan[error])
+	newDoc := models.Document{
+		DocumentID: userDoc.DocumentID,
+	}
+	go CheckUserOwnDoc(userDoc, check)
+
+	go func() {
+		if <-check {
+			fmt.Println("Check:", check)
+			newDoc.Delete(delete, result)
+			close(result)
+		}
+	}()
+
+	deleteResult := <-result
+	if deleteResult.Error != nil {
+		log.Printf("Error deleting document: %v", deleteResult.Error)
+		res <- false
+		return
+	}
+	res <- true
+	defer close(res)
+	defer close(result)
+}
+
+func CheckUserOwnDoc(userDoc UserDoc, res chan<- bool) {
+	query := services.Service.Conne.DbRead
+	newDoc := models.DocumentOwnership{
+		UserID:     userDoc.UserID,
+		DocumentID: userDoc.DocumentID,
+	}
+
+	result := make(chan models.ResultChan[*models.DocumentOwnership])
+
+	go func() {
+		newDoc.Query(query, result)
+		close(result)
+	}()
+
+	queryResult := <-result
+	if queryResult.Error != nil {
+		log.Printf("Error querying document ownership: %v", queryResult.Error)
+		res <- false
+		return
+	}
+	res <- queryResult.Data != nil
+	defer close(res)
+	defer close(result)
 }
