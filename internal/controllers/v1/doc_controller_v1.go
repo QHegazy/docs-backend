@@ -6,7 +6,7 @@ import (
 	docs "docs/internal/services/doc"
 	"docs/internal/utils"
 	"net/http"
-
+	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -69,13 +69,37 @@ func NewDoc(c *gin.Context) {
 // @Success 200 {object} response.SuccessResponse "Documents retrieved successfully"
 // @Router /doc [get]
 func RetrieveDocs(c *gin.Context) {
-	successfully := response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Status:  http.StatusOK,
-			Message: "Documents retrieved successfully",
-		},
+	userIdCookie, err := c.Cookie("doc")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID cookie not found"})
+		return
 	}
-	c.JSON(http.StatusOK, successfully)
+
+	userId, err := utils.Deobfuscate(userIdCookie)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	result := make(chan *[]uuid.UUID)
+	go docs.QueryAllDocOwnerByUser(uuid.MustParse(userId), result)
+
+	select {
+	case docsOwnership := <-result:
+		if docsOwnership == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve documents"})
+		} else {
+			c.JSON(http.StatusOK, response.SuccessResponse{
+				BaseResponse: response.BaseResponse{
+					Status:  http.StatusOK,
+					Message: "Documents retrieved successfully",
+				},
+				Data: docsOwnership,
+			})
+		}
+	case <-time.After(10 * time.Second):
+		c.JSON(http.StatusGatewayTimeout, gin.H{"error": "Request timed out"})
+	}
 }
 
 // @Summary Deletes a document

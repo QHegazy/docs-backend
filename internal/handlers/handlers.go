@@ -22,14 +22,15 @@ func RegisterRoutes() *gin.Engine {
 	r.NoRoute(middlewares.NotFound)
 	r.GET("/auth/google/callback", v1.GoogleAuthCallback)
 	v1Group := r.Group("v1")
+	docGroup := v1Group.Group("doc")
 
 	{
 
 		v1Group.GET("/auth/google/login", v1.GoogleAuth)
 		v1Group.GET("/authorize", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.Authorize_v1)
 		v1Group.POST("/logout", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.Logout_v1)
-		v1Group.GET("/doc/:doc_id", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
-		v1Group.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
+		docGroup.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
+		docGroup.GET("/own", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
 		// v1Group.DELETE("/doc",middlewares.AuthMiddleware(), middlewares.CheckSessionToken(),v1.)
 
 		// v1Group.GET("/doc/:doc_id/contributors", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocContributors)

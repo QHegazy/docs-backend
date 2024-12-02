@@ -1,7 +1,6 @@
 package docs
 
 import (
-	"context"
 	dto "docs/internal/Dto"
 	grpc_client "docs/internal/grpc-client"
 	"docs/internal/models"
@@ -78,31 +77,6 @@ func CreateDoc(docPost dto.DocPost, public dto.Visibility, res chan<- interface{
 		res <- insertResult.Data
 	}
 	close(res)
-}
-
-func QueryAllUser(userDoc UserDoc, res chan<- *[]models.Document) {
-	query := services.Service.Conne.DbRead
-	newDoc := models.Document{
-		DocumentID: userDoc.DocumentID,
-	}
-
-	result := make(chan models.ResultChan[*[]models.Document])
-
-	go func() {
-		newDoc.QueryAllByUser(context.Background(), query, userDoc.UserID, result)
-		close(result)
-	}()
-
-	queryResult := <-result
-	if queryResult.Error != nil {
-		log.Printf("Error querying document: %v", queryResult.Error)
-		res <- nil
-		return
-	}
-	res <- queryResult.Data
-	defer close(res)
-	defer close(result)
-
 }
 
 func QueryDoc(userDoc UserDoc, res chan<- *models.Document) {

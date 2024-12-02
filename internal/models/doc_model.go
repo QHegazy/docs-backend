@@ -2,8 +2,6 @@ package models
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -50,41 +48,29 @@ func (d *Document) Query(pool *pgxpool.Pool, resultChan chan<- ResultChan[*Docum
 	resultChan <- ResultChan[*Document]{Data: &doc}
 }
 
-func (d *Document) QueryAllByUser(ctx context.Context, pool *pgxpool.Pool, userID fmt.Stringer, resultChan chan<- ResultChan[*[]Document]) {
-	// Create a query context with timeout (if needed, otherwise pass ctx from caller)
-	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+// func (d *Document) QueryAll(pool *pgxpool.Pool, resultChan chan<- ResultChan[*[]Document]) {
+// 	rows, err := pool.Query(context.Background(), `SELECT document_name, mongo_id FROM documents ORDER BY document_name ASC`)
+// 	if err != nil {
+// 		resultChan <- ResultChan[*[]Document]{Error: err}
+// 		return
+// 	}
+// 	defer rows.Close()
 
-	rows, err := pool.Query(queryCtx,
-		`
-		SELECT document_name, mongo_id 
-		FROM documents 
-		WHERE user_id = $1
-		ORDER BY created_at DESC 
-		LIMIT 100 OFFSET 0
-	`, userID)
+// 	var docs []Document
+// 	for rows.Next() {
+// 		var doc Document
+// 		err := rows.Scan(&doc.DocumentName, &doc.MongoID)
+// 		if err != nil {
+// 			resultChan <- ResultChan[*[]Document]{Error: err}
+// 			return
+// 		}
+// 		docs = append(docs, doc)
+// 	}
 
-	if err != nil {
-		resultChan <- ResultChan[*[]Document]{Error: fmt.Errorf("query error: %w", err)}
-		return
-	}
-	defer rows.Close()
+// 	if err := rows.Err(); err != nil {
+// 		resultChan <- ResultChan[*[]Document]{Error: err}
+// 		return
+// 	}
 
-	var documents []Document
-	for rows.Next() {
-		var doc Document
-		if err := rows.Scan(&doc.DocumentName, &doc.MongoID); err != nil {
-			resultChan <- ResultChan[*[]Document]{Error: fmt.Errorf("row scan error: %w", err)}
-			return
-		}
-		documents = append(documents, doc)
-	}
-
-	// Check for errors after iterating over rows
-	if err := rows.Err(); err != nil {
-		resultChan <- ResultChan[*[]Document]{Error: fmt.Errorf("row iteration error: %w", err)}
-		return
-	}
-
-	resultChan <- ResultChan[*[]Document]{Data: &documents}
-}
+// 	resultChan <- ResultChan[*[]Document]{Data: &docs}
+// }

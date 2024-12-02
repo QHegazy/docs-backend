@@ -45,3 +45,32 @@ func (d *DocumentOwnership) Query(pool *pgxpool.Pool, resultChan chan<- ResultCh
 	}
 	resultChan <- ResultChan[*DocumentOwnership]{Data: &doc}
 }
+func (d *DocumentOwnership) QueryAllByUser(ctx context.Context, pool *pgxpool.Pool, resultChan chan<- ResultChan[[]uuid.UUID]) {
+	defer close(resultChan) // Ensure the channel is closed when the function completes
+
+	rows, err := pool.Query(ctx, `SELECT document_id FROM public.document_ownerships WHERE user_id = $1 ORDER BY updated_at DESC`, d.UserID)
+	if err != nil {
+		resultChan <- ResultChan[[]uuid.UUID]{Error: err}
+		return
+	}
+	defer rows.Close()
+
+	var docs []uuid.UUID
+	for rows.Next() {
+		var doc uuid.UUID
+		if err := rows.Scan(&doc); err != nil {
+			resultChan <- ResultChan[[]uuid.UUID]{Error: err}
+			return
+		}
+		docs = append(docs, doc)
+	}
+
+	// Check for row iteration errors
+	if err := rows.Err(); err != nil {
+		resultChan <- ResultChan[[]uuid.UUID]{Error: err}
+		return
+	}
+
+	// Send the collected document IDs through the channel
+	resultChan <- ResultChan[[]uuid.UUID]{Data: docs}
+}
