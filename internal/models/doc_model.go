@@ -39,8 +39,8 @@ func (d *Document) Delete(pool *pgxpool.Pool, resultChan chan<- ResultChan[error
 
 func (d *Document) Query(pool *pgxpool.Pool, resultChan chan<- ResultChan[*Document]) {
 	var doc Document
-	query := `SELECT document_name, mongo_id FROM documents WHERE mongo_id = $1`
-	err := pool.QueryRow(context.Background(), query, d.MongoID).Scan(&doc.DocumentName, &doc.MongoID)
+	query := `SELECT document_name, mongo_id FROM public.documents WHERE document_id = $1`
+	err := pool.QueryRow(context.Background(), query, d.DocumentID).Scan(&doc.DocumentName, &doc.MongoID)
 	if err != nil {
 		resultChan <- ResultChan[*Document]{Error: err}
 		return

@@ -2,11 +2,13 @@ package v1
 
 import (
 	dto "docs/internal/Dto"
+	"docs/internal/models"
 	"docs/internal/response"
 	docs "docs/internal/services/doc"
 	"docs/internal/utils"
 	"net/http"
 	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -137,4 +139,25 @@ func DeleteDoc(c *gin.Context) {
 		},
 	}
 	c.JSON(http.StatusOK, successfully)
+}
+func RetrieveDoc(c *gin.Context) {
+	docId := c.Param("doc_id")
+	docIdUuid, _ := uuid.Parse(docId)
+	result := make(chan *models.Document)
+	go docs.QueryDocById(docIdUuid, result)
+	res := <-result
+	if res == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve document"})
+		return
+	}
+
+	successfully := response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Status:  http.StatusOK,
+			Message: "Document retrieved successfully",
+		},
+		Data: res,
+	}
+	c.JSON(http.StatusOK, successfully)
+
 }

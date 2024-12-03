@@ -42,6 +42,7 @@ async function updateDoc(docDto: PartialDocDto): Promise<SuccessResponse<any> | 
     try {
         let updateQuery: any;
 
+        // Set the query to find the document based on either id or title
         if (docDto.id) {
             updateQuery = { _id: docDto.id };
         } else if (docDto.title) {
@@ -54,7 +55,17 @@ async function updateDoc(docDto: PartialDocDto): Promise<SuccessResponse<any> | 
             } as ErrorResponse;
         }
 
-        const updatedDoc = await QuillData.findOneAndUpdate(updateQuery, docDto.content, { new: true, runValidators: true });
+        // Prepare the update object based on provided fields in docDto
+        const updateData: Partial<DocDto> = {};
+        if (docDto.content) {
+            updateData.content = docDto.content;
+        }
+        if (docDto.title) {
+            updateData.title = docDto.title;
+        }
+
+        // Perform the update operation with only the provided fields
+        const updatedDoc = await QuillData.findOneAndUpdate(updateQuery, updateData, { new: true, runValidators: true });
 
         if (!updatedDoc) {
             return {
@@ -72,7 +83,7 @@ async function updateDoc(docDto: PartialDocDto): Promise<SuccessResponse<any> | 
 
     } catch (error) {
         console.error("Error updating document:", error);
-        
+
         let errorMessage = "Could not update the document";
 
         if (error instanceof Error) {

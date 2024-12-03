@@ -23,6 +23,7 @@ func RegisterRoutes() *gin.Engine {
 	r.GET("/auth/google/callback", v1.GoogleAuthCallback)
 	v1Group := r.Group("v1")
 	docGroup := v1Group.Group("doc")
+	docGroup.Use(middlewares.AuthMiddleware(), middlewares.CheckSessionToken())
 
 	{
 
@@ -30,8 +31,9 @@ func RegisterRoutes() *gin.Engine {
 		v1Group.GET("/authorize", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.Authorize_v1)
 		v1Group.POST("/logout", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.Logout_v1)
 		docGroup.POST("/doc", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.NewDoc)
-		docGroup.GET("/own", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocs)
-		// v1Group.DELETE("/doc",middlewares.AuthMiddleware(), middlewares.CheckSessionToken(),v1.)
+		docGroup.GET("/own", v1.RetrieveDocs)
+		docGroup.DELETE("/doc", v1.DeleteDoc)
+		docGroup.GET("/:doc_id", v1.RetrieveDoc)
 
 		// v1Group.GET("/doc/:doc_id/contributors", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.RetrieveDocContributors)
 		// v1Group.POST("/doc/:doc_id/contributors", middlewares.AuthMiddleware(), middlewares.CheckSessionToken(), v1.AddDocContributor)

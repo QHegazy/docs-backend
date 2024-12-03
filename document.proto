@@ -7,6 +7,9 @@ option go_package="./document";
 service NewDocument {
     rpc InsertDocument(DocumentRequest) returns (DocumentResponse);
 }
+service UpdateDocument {
+    rpc UpdateDocument(UpdateDocumentRequest) returns (UpdateDocumentResponse);
+}
 service RemoveDocument{
     rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
 }
@@ -17,6 +20,13 @@ message DocumentRequest {
 
 message DocumentResponse {
     string document_id = 1;
+}
+message UpdateDocumentRequest {
+    string title       = 1;
+}
+
+message UpdateDocumentResponse {
+    string message = 1;
 }
 
 message DeleteDocumentRequest {

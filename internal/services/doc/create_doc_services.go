@@ -79,6 +79,28 @@ func CreateDoc(docPost dto.DocPost, public dto.Visibility, res chan<- interface{
 	close(res)
 }
 
+func QueryDocById(docId uuid.UUID, res chan<- *models.Document) {
+
+	query := services.Service.Conne.DbRead
+	newDoc := models.Document{
+		DocumentID: docId,
+	}
+
+	resultChan := make(chan models.ResultChan[*models.Document])
+
+	go newDoc.Query(query, resultChan)
+
+	queryResult := <-resultChan
+	if queryResult.Error != nil {
+		log.Printf("Error querying document: %v", queryResult.Error)
+		res <- nil
+		return
+	}
+	res <- queryResult.Data
+	defer close(res)
+
+}
+
 func QueryDoc(userDoc UserDoc, res chan<- *models.Document) {
 	query := services.Service.Conne.DbRead
 	newDoc := models.Document{

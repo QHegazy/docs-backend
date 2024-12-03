@@ -7,6 +7,7 @@ import dbConnect from "./db/dbConnection";
 import { QuillData } from "./models/delta";
 import { getDoc, updateDoc } from "./services/docService";
 import { Types } from "mongoose";
+import { DocDto, PartialDocDto } from "./Dto/doc";
 import {grpcServer} from "./grpc/grpc_server";
 config(); 
 
@@ -52,10 +53,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("save-doc", async (id,message) => {
-   const doc = await getDoc({id:id as Types.ObjectId});
-   if (doc){
-    console.log(doc)
-   }
+    try {
+      const updateData: PartialDocDto = { id: new Types.ObjectId(id), content: message };
+
+      const doc = await updateDoc(updateData);
+      socket.to(id).emit("document-updated", doc);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      socket.emit("document-error", error);
+    }
 
    
   });
@@ -75,7 +81,7 @@ io.on("connection", (socket) => {
   socket.on("message", (data: any, callback?: (response: string) => void) => {
     try {
       console.log("New message received:", data);
-      socket.broadcast.emit("message", data); // Broadcast to other clients
+      socket.broadcast.emit("message", data); 
       if (callback) {
         callback("Message received and broadcasted");
       }
@@ -96,9 +102,22 @@ io.on("connection", (socket) => {
 app.get("/doc/:id", async (req, res) => {
   try {
     const docId = req.params.id;
-    const latestDoc = await QuillData.findOne({_id:docId}).sort({ createdAt: -1 });
-    res.json(latestDoc || {});
+
+    // Fetch the latest document by _id
+    const latestDoc = await QuillData.findOne({ _id: docId }).sort({ createdAt: -1 });
+
+    if (latestDoc) {
+      const responseDoc = {
+        ...latestDoc.toObject(),  
+        _id: latestDoc._id.toString(), 
+      };
+      responseDoc.content = latestDoc.content; 
+      res.json(responseDoc.content);
+    } else {
+      res.status(404).json({ message: "Document not found" });
+    }
   } catch (error) {
+    console.error("Error fetching document:", error);
     res.status(500).json({ error: "Error fetching document" });
   }
 });
